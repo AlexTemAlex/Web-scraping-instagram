@@ -3,3 +3,6 @@ venv/
 
 # cache Python
 __pycache__/
+
+# cookies
+*_instagram.json
