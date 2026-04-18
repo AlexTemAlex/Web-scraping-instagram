@@ -6,3 +6,6 @@ __pycache__/
 
 # cookies
 *_instagram.json
+
+#archivos xlsx
+*.xlsx
