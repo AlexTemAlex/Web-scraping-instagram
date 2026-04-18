@@ -5,6 +5,9 @@ import time
 import os
 from instagram_scrapper import InstagramScrapper
 import json
+from pathlib import Path
+
+BASE_PATH = Path(__file__).parent
 
 STORAGE_PATH_INSTAGRAM = "storage_instagram.json"
 STORAGE_PATH = STORAGE_PATH_INSTAGRAM
@@ -12,7 +15,9 @@ STORAGE_PATH = STORAGE_PATH_INSTAGRAM
 EXCEL_FILE = "cuentas.xlsx"
 SHEET_NAME = "Hoja1"
 
-ARCHIVO_JSON = "persistencia.json"
+JSON_FILE = "persistencia.json"
+
+BATCH_SIZE = 10  # guardar cada N registros
 
 def menu():
     print("\n===== SCRAPER MENU =====")
@@ -47,21 +52,42 @@ def load_excel(file_path, sheet_name=0):
     df = pd.read_excel(file_path, sheet_name=sheet_name)
     return df
 
-def process_profile(ig, users, user_id, url):
+def save_batch(path_json, buffer):
+    path_json = Path(path_json)
+
+    if path_json.exists():
+        try:
+            with open(path_json, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except:
+            data = []
+    else:
+        data = []
+
+    data.extend(buffer)
+
+    with open(path_json, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+
+def process_profile(ig, users, user, buffer):
+    user_id = user["id"]
+    url = user["url"]
     print(f"   ID: {user_id}\n   URL: {url}")
 
     try:
         ig.abrir_perfil(url)
-        data = ig.get_user_info()  
-        if data:
-            users[user_id] = users.get(user_id, {}) | data
-        else:
-            users[user_id] = users.get(user_id, {})      
-                    
-        print("   Datos Extraidos:")
-        print(f"{json.dumps(users[user_id], indent=4, ensure_ascii=False)}\n")
+        data = ig.get_user_info()
+    
+        result = {
+            "id": user_id,
+            "url": url,
+            **(data or {})
+        }
         
-        # guardar_json_incremental(ARCHIVO_JSON, info)
+        print("   Datos Extraidos:")
+        print(f"{json.dumps(result, indent=4, ensure_ascii=False)}\n")
+        
+        buffer.append(result)   # Guardar en datos en buffer
     except Exception as e:
         print(f"❌ Error con {url}: {e}")
 
@@ -80,10 +106,11 @@ def main():
                     return
                 
                 df = load_excel(EXCEL_FILE, SHEET_NAME)
+                
                 df = df[df["url"].fillna("").str.strip() != ""]
 
-                users = df.set_index("id")[["url"]].to_dict(orient="index")     # Estructura {id: {"url": "valor"},}
-                valid_urls = users.items()
+                users = df[["id", "url"]].to_dict(orient="records")     # Lista de diccionarios [{"id": "valor","url": "valor"},]
+                valid_urls = users
                 total = len(valid_urls)
                 
                 # Valida la existencia de cookies sino las crea mediante sesión manual
@@ -104,22 +131,31 @@ def main():
                 print(f"\n#################### Iniciando Scrapeo - Total de perfiles {total} ####################")
 
                 print("Datos a extraer:")
+                
                 for idx, func in enumerate(ig.list_functions, start=1):
                     print(f"    {idx}. {func.__name__}")
 
-                print("")
-                for idx, (user_id, info) in enumerate(users.items(), start=1):
-                    url = info["url"]
-                    
+                buffer = []
+                
+                for idx, user in enumerate(users, start=1):
                     print(f"---------- Perfil {idx}/{total} ----------")
-                    try:
-                        process_profile(ig, users, user_id, url)
-                    except Exception as e:
-                        print(f"❌ Error procesando {url}: {e}")
 
+                    try:
+                        process_profile(ig, users, user, buffer)
+                        
+                        if len(buffer) >= BATCH_SIZE:       # cuando llegue al tamaño, guarda y limpia
+                            save_batch(JSON_FILE, buffer)
+                            buffer.clear()
+                            
+                    except Exception as e:
+                        print(f"❌ Error procesando {user["url"]}: {e}")
+                
+                if buffer:      # Guarda lo que quede al final
+                    save_batch(JSON_FILE, buffer)
+                
                 browser.close()
                 print("\n✅ Proceso finalizado")
-                print(f"Archivo JSON: {ARCHIVO_JSON}")
+                print(f"Archivo JSON: {JSON_FILE}")
 
             else:
                 print("❌ Opción inválida")

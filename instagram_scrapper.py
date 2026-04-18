@@ -1,6 +1,6 @@
 from pathlib import Path
 
-BASE_URL = Path(__file__).parent
+BASE_PATH = Path(__file__).parent
 
 class InstagramScrapper:
 
@@ -46,7 +46,7 @@ class InstagramScrapper:
         return result
 
     def extract_profile(self, page, data=None):
-        js_path = BASE_URL / "content_extractors/extract_profile.js"
+        js_path = BASE_PATH / "content_extractors/extract_profile.js"
 
         try:
             # Cargar archivo extract_profile.js 
