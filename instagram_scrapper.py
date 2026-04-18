@@ -8,6 +8,7 @@ class InstagramScrapper:
         self.page = page
         self.list_functions = [
             self.extract_profile,
+            self.extract_location,
         ]
 
     def abrir_perfil(self, url):
@@ -45,25 +46,30 @@ class InstagramScrapper:
             
         return result
 
-    def extract_profile(self, page, data=None):
-        js_path = BASE_PATH / "content_extractors/extract_profile.js"
+    def extract_profile(self, page):
+        return self.run_extractor(page, "profile.js")
+
+    def extract_location(self, page):
+        return self.run_extractor(page, "location_creation_date.js")
+
+    def run_extractor(self, page, js_filename):
+        js_path = BASE_PATH / f"content_extractors/{js_filename}"
 
         try:
-            # Cargar archivo extract_profile.js 
             with open(js_path, "r", encoding="utf-8") as f:
                 js_script = f.read()
-            
-            page.wait_for_load_state("domcontentloaded") #Probar uno de estos 2
+
+            page.wait_for_load_state("domcontentloaded")
             page.wait_for_timeout(1500)
-            
+
             data = page.evaluate(js_script)
 
             if not data:
-                print("No se extrajo información.")
+                print(f"No se extrajo información de {js_filename}")
                 return None
 
             return data
 
         except Exception as e:
-            print(f"\nError: {e}")
-
+            print(f"\nError en {js_filename}: {e}")
+            return None

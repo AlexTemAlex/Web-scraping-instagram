@@ -123,7 +123,7 @@ def main():
                 page = browser.new_page()
                 
                 page.goto("https://www.instagram.com/")
-                time.sleep(5)
+                time.sleep(1)
                 
                 # Iniciar objeto IntagramScrapper
                 ig = InstagramScrapper(page)
