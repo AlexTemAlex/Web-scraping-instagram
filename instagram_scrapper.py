@@ -8,7 +8,7 @@ class InstagramScrapper:
         self.page = page
         self.list_functions = [
             self.extract_profile,
-            self.extract_location,
+            # self.extract_location,
         ]
 
     def abrir_perfil(self, url):

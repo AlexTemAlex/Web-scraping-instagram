@@ -69,7 +69,7 @@ def save_batch(path_json, buffer):
     with open(path_json, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
 
-def process_profile(ig, users, user, buffer):
+def process_profile(ig, user, buffer):
     user_id = user["id"]
     url = user["url"]
     print(f"   ID: {user_id}\n   URL: {url}")
@@ -141,7 +141,7 @@ def main():
                     print(f"---------- Perfil {idx}/{total} ----------")
 
                     try:
-                        process_profile(ig, users, user, buffer)
+                        process_profile(ig, user, buffer)
                         
                         if len(buffer) >= BATCH_SIZE:       # cuando llegue al tamaño, guarda y limpia
                             save_batch(JSON_FILE, buffer)
