@@ -1,5 +1,6 @@
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
+import random
 
 BASE_PATH = Path(__file__).parent
 
@@ -27,9 +28,9 @@ class InstagramScrapper:
                 "enabled": True
             },
             {
-                "name": "list_followers",
-                "func": self.extract_list_followers,
-                "args": {"max_followers": 50},
+                "name": "list_following",
+                "func": self.extract_list_following,
+                "args": {"max_following": 50},
                 "enabled": True
             }
         ]
@@ -82,7 +83,7 @@ class InstagramScrapper:
                 if data.get("private") is True:
 
                     for item in self.dict_functions:
-                        if item["name"] in ("posts", "list_followers"):
+                        if item["name"] in ("posts", "list_following"):
                             item["enabled"] = False
 
             except Exception as e:
@@ -174,26 +175,42 @@ class InstagramScrapper:
 
         return posts
 
-    def extract_list_followers(self, page, max_scrolls=20, max_no_change=5, max_followers=None):
+    def extract_list_following(self, page, max_no_change=12, max_following=None):
         page.wait_for_selector("a[href$='/following/']", timeout=40000)
-        page.click("a[href$='/followers/']")
+        page.click("a[href$='/following/']")
         page.wait_for_timeout(3000)
 
-        dialog = page.wait_for_selector("div[role='dialog']", timeout=30000)
+        page.wait_for_selector("div[role='dialog']", timeout=30000)
 
         usernames = []
         seen = set()
 
-        scroll_count = 0
         no_change = 0
         last_count = 0
+        last_height = 0
 
-        while scroll_count < max_scrolls and no_change < max_no_change:
-            scroll_count += 1
+        get_container = """
+        () => {
+            const dialog = document.querySelector('div[role="dialog"]');
+            if (!dialog) return null;
 
+            const divs = dialog.querySelectorAll('div');
+
+            for (let el of divs) {
+                if (el.scrollHeight > el.clientHeight) {
+                    return el;
+                }
+            }
+            return null;
+        }
+        """
+
+        while True:
+
+            # 🔥 EXTRAER USERS
             nuevos = page.evaluate("""
                 () => Array.from(
-                    document.querySelectorAll('div[role="dialog"] a[role="link"]')
+                    document.querySelectorAll('div[role="dialog"] a[href^="/"]')
                 )
                 .map(a => a.getAttribute('href'))
                 .filter(h => h && /^\\/[a-zA-Z0-9._]+\\/$/.test(h))
@@ -205,23 +222,46 @@ class InstagramScrapper:
                     seen.add(u)
                     usernames.append(u)
 
-                    # Limite de followers
-                    if max_followers and len(usernames) >= max_followers:
-                        return {
-                            "list_followers": usernames[:max_followers]
-                        }
+                    if max_following and len(usernames) >= max_following:
+                        return {"list_followers": usernames[:max_following]}
 
-            dialog.evaluate("el => el.scrollBy(0, 1200)")
-            page.wait_for_timeout(2000)
+            # 🔥 MULTI-SCROLL (CLAVE REAL)
+            for _ in range(3):
+                page.evaluate(f"""
+                {get_container}
+                (c => {{
+                    if (c) c.scrollTop = c.scrollHeight;
+                }})(({get_container})())
+                """)
+                page.wait_for_timeout(800)
 
-            if len(usernames) == last_count:
+            # ⏳ ESPERA REAL
+            page.wait_for_timeout(2500)
+
+            # 🔥 MEDIR ALTURA (NUEVO)
+            current_height = page.evaluate(f"""
+            {get_container}
+            (c => c ? c.scrollHeight : 0)(({get_container})())
+            """)
+
+            current_count = len(usernames)
+
+            # 🔥 DETECCIÓN REAL DE FIN
+            if current_count == last_count and current_height == last_height:
                 no_change += 1
             else:
                 no_change = 0
-                last_count = len(usernames)
+                last_count = current_count
+                last_height = current_height
+
+            print(f"   [INFO] Users: {current_count} | Height: {current_height} | NoChange: {no_change}")
+
+            if no_change >= max_no_change:
+                print("   [INFO] FIN - NO SE DETECTARON MAS USUARIOS")
+                break
 
         return {
-            "list_followers": usernames[:max_followers] if max_followers else usernames
+            "list_followers": usernames
         }
 
     def run_extractor(self, page, js_filename):

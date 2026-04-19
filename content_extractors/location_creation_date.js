@@ -29,13 +29,32 @@ async () => {
   }
 
   if (infoDialog) {
-    const textSpans = infoDialog.querySelectorAll(
-      'span[data-bloks-name="bk.components.Text"]',
+    const blocks = infoDialog.querySelectorAll(
+      'div[data-bloks-name="bk.components.Flexbox"]',
     );
 
-    if (textSpans.length >= 2) {
-      result.location = textSpans[2].innerText.trim();
-      result.creation_date = textSpans[4].innerText.trim();
+    const locationLabels = ["ubicación", "location", "localización"];
+    const dateLabels = ["fecha", "joined", "unió", "desde"];
+
+    for (let block of blocks) {
+      const spans = block.querySelectorAll(
+        'span[data-bloks-name="bk.components.Text"]',
+      );
+
+      if (spans.length < 2) continue;
+
+      const label = spans[0].innerText.trim().toLowerCase(); // 👈 IMPORTANTE
+      const value = spans[1].innerText.trim();
+
+      // 📍 ubicación
+      if (!result.location && locationLabels.some((l) => label.includes(l))) {
+        result.location = value;
+      }
+
+      // 📅 fecha
+      if (!result.creation_date && dateLabels.some((l) => label.includes(l))) {
+        result.creation_date = value;
+      }
     }
 
     const closeButton = Array.from(document.querySelectorAll("button")).find(
