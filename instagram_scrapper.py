@@ -82,7 +82,7 @@ class InstagramScrapper:
                 if data.get("private") is True:
 
                     for item in self.dict_functions:
-                        if item["name"] in ("posts", "followers"):
+                        if item["name"] in ("posts", "list_followers"):
                             item["enabled"] = False
 
             except Exception as e:
@@ -96,51 +96,76 @@ class InstagramScrapper:
     def extract_location_creation_date(self, page):
         return self.run_extractor(page, "location_creation_date.js")
 
-    def extract_posts(self, page, num_post=10):
+    def extract_posts(self, page, num_post):
         posts = {}
+
         page.wait_for_selector('a[href*="/p/"], a[href*="/reel/"]', timeout=10000)
 
-        # localizar todos los links en el DOM
-        post_elements = page.locator('a[href*="/p/"], a[href*="/reel/"]')
-
-        count = min(post_elements.count(), num_post)
-
-        for i in range(count):
+        for i in range(num_post):
             try:
+                # 🔁 re-localizar SIEMPRE
+                post_elements = page.locator('a[href*="/p/"], a[href*="/reel/"]')
+
+                if i >= post_elements.count():
+                    break
+
                 el = post_elements.nth(i)
 
-                # scroll + click real
+                # 🔽 scroll
                 el.scroll_into_view_if_needed()
-                el.click()
+                page.wait_for_timeout(500)
 
+                # 🔥 click robusto (fallback incluido)
+                try:
+                    el.click(timeout=3000)
+                except:
+                    page.evaluate("(el) => el.click()", el)
+
+                # ⏳ esperar modal
+                page.wait_for_selector("article", timeout=10000)
                 page.wait_for_selector("time", timeout=10000)
 
+                # 📅 fecha
                 datetime_utc = page.evaluate("""
                     () => document.querySelector('time')?.getAttribute('datetime')
                 """)
+
+                # ❤️ likes (más robusto)
                 likes = page.evaluate("""
                 () => {
-                    const article = document.querySelector('article[role="presentation"]');
-                    if (!article) return null;
-
-                    const text = article.innerText.toLowerCase();
-
-                    const match = text.match(/([\d.,]+(?:\s*[km]| mil)?)\s*(likes|me gusta)/i);
-
-                    return match ? match[1] : null;
+                    const spans = document.querySelectorAll('span');
+                    for (let s of spans) {
+                        const text = s.innerText.toLowerCase();
+                        if (text.includes('likes') || text.includes('me gusta')) {
+                            return text
+                                .replace('likes', '')
+                                .replace('me gusta', '')
+                                .trim();
+                        }
+                    }
+                    return null;
                 }
                 """)
+
                 posts[f"post_{i+1}"] = {
                     "url": page.url,
-                    "date_ecuador": self.to_ecuador_time(datetime_utc),
+                    "date_ecuador": self.to_ecuador_time(datetime_utc) if datetime_utc else None,
                     "likes": likes
                 }
 
-                # volver atrás
-                page.go_back()
-                page.wait_for_load_state("domcontentloaded")
+                # ❌ cerrar modal (PRIORIDAD: botón real)
+                try:
+                    close_btn = page.locator('svg[aria-label="Cerrar"], svg[aria-label="Close"]').first
+                    close_btn.locator("..").click(timeout=3000)
+                except:
+                    # fallback
+                    page.keyboard.press("Escape")
 
-            except Exception:
+                # ⏳ esperar que el modal desaparezca
+                page.wait_for_selector("article", state="hidden", timeout=10000)
+
+            except Exception as e:
+                print(f"Error en post {i}: {e}")
                 posts[f"post_{i+1}"] = {
                     "url": None,
                     "date_ecuador": None,

@@ -18,11 +18,15 @@ async () => {
   if (usernameEl) result.username = usernameEl.innerText.trim();
 
   // PRIVATE ACCOUNT
-  result.private = !!document
-    .querySelector("h2, span")
-    ?.innerText.toLowerCase()
-    .match(/privad|private/);
+  result.private = (() => {
+    const spans = document.querySelectorAll("main span");
 
+    const text = Array.from(spans)
+      .map((s) => s.innerText?.toLowerCase() || "")
+      .join(" ");
+
+    return /privad|private/.test(text);
+  })();
   // ============================
   // FOLLOWERS / FOLLOWING
   // ============================
