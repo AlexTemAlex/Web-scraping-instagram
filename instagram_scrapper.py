@@ -123,9 +123,9 @@ class InstagramScrapper:
                     const article = document.querySelector('article[role="presentation"]');
                     if (!article) return null;
 
-                    const text = article.innerText;
+                    const text = article.innerText.toLowerCase();
 
-                    const match = text.match(/([\\d.,]+)\\s*(likes|me gusta)/i);
+                    const match = text.match(/([\d.,]+(?:\s*[km]| mil)?)\s*(likes|me gusta)/i);
 
                     return match ? match[1] : null;
                 }
