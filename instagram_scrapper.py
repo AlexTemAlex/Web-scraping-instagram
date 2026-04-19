@@ -7,10 +7,31 @@ class InstagramScrapper:
 
     def __init__(self, page):
         self.page = page
-        self.list_functions = [
-            self.extract_profile,
-            self.extract_location,
-            self.extract_posts,
+        self.dict_functions = [     # Se recomienda mantener la funcion profile primera
+            {
+                "name": "profile",
+                "func": self.extract_profile,
+                "args": {},
+                "enabled": True
+            },
+            {
+                "name": "location_and_creation_date",
+                "func": self.extract_location_creation_date,
+                "args": {},
+                "enabled": True
+            },
+            {
+                "name": "posts",
+                "func": self.extract_posts,
+                "args": {"num_post": 5},
+                "enabled": True
+            },
+            {
+                "name": "list_followers",
+                "func": self.extract_list_followers,
+                "args": {"max_followers": 50},
+                "enabled": True
+            }
         ]
 
     def abrir_perfil(self, url):
@@ -22,7 +43,6 @@ class InstagramScrapper:
             self.page.click('svg[aria-label="Cerrar"]', timeout=3000)
         except:
             pass
-
 
     def to_ecuador_time(self, iso):
         if not iso:
@@ -39,24 +59,41 @@ class InstagramScrapper:
         except:
             return None
 
-    def get_user_info(self):     
+    def get_user_info(self):
         result = {}
-        
-        for func in self.list_functions:
-            try:
-                data = func(self.page)
-                if data is not None:
-                    result.update(data)
-            except Exception as e:
-                print(f"❌ Error en {func.__name__}: {e}")
+
+        for item in self.dict_functions:
+            if not item.get("enabled", True):
                 continue
-            
+
+            func = item["func"]
+            args = item.get("args", {})
+
+            try:
+                data = func(self.page, **args)
+
+                if data is None:
+                    continue
+
+                # actualizar resultado global
+                result.update(data)
+
+                # si el perfil es privado
+                if data.get("private") is True:
+
+                    for item in self.dict_functions:
+                        if item["name"] in ("posts", "followers"):
+                            item["enabled"] = False
+
+            except Exception as e:
+                print(f"❌ Error en {item.get('name', func.__name__)}: {e}")
+
         return result
 
     def extract_profile(self, page,):
         return self.run_extractor(page, "profile.js")
 
-    def extract_location(self, page):
+    def extract_location_creation_date(self, page):
         return self.run_extractor(page, "location_creation_date.js")
 
     def extract_posts(self, page, num_post=10):
@@ -111,6 +148,56 @@ class InstagramScrapper:
                 }
 
         return posts
+
+    def extract_list_followers(self, page, max_scrolls=20, max_no_change=5, max_followers=None):
+        page.wait_for_selector("a[href$='/following/']", timeout=40000)
+        page.click("a[href$='/followers/']")
+        page.wait_for_timeout(3000)
+
+        dialog = page.wait_for_selector("div[role='dialog']", timeout=30000)
+
+        usernames = []
+        seen = set()
+
+        scroll_count = 0
+        no_change = 0
+        last_count = 0
+
+        while scroll_count < max_scrolls and no_change < max_no_change:
+            scroll_count += 1
+
+            nuevos = page.evaluate("""
+                () => Array.from(
+                    document.querySelectorAll('div[role="dialog"] a[role="link"]')
+                )
+                .map(a => a.getAttribute('href'))
+                .filter(h => h && /^\\/[a-zA-Z0-9._]+\\/$/.test(h))
+                .map(h => h.slice(1, -1))
+            """)
+
+            for u in nuevos:
+                if u not in seen:
+                    seen.add(u)
+                    usernames.append(u)
+
+                    # Limite de followers
+                    if max_followers and len(usernames) >= max_followers:
+                        return {
+                            "list_followers": usernames[:max_followers]
+                        }
+
+            dialog.evaluate("el => el.scrollBy(0, 1200)")
+            page.wait_for_timeout(2000)
+
+            if len(usernames) == last_count:
+                no_change += 1
+            else:
+                no_change = 0
+                last_count = len(usernames)
+
+        return {
+            "list_followers": usernames[:max_followers] if max_followers else usernames
+        }
 
     def run_extractor(self, page, js_filename):
         js_path = BASE_PATH / f"content_extractors/{js_filename}"

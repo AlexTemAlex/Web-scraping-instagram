@@ -131,9 +131,10 @@ def main():
                 print(f"\n#################### Iniciando Scrapeo - Total de perfiles {total} ####################")
 
                 print("Datos a extraer:")
-                
-                for idx, func in enumerate(ig.list_functions, start=1):
-                    print(f"    {idx}. {func.__name__}")
+                dict_functions = ig.dict_functions
+                for idx, item in enumerate(dict_functions, start=1):
+                    if (item["enabled"]):
+                        print(f"    {idx}. {item["name"]}")
 
                 buffer = []
                 

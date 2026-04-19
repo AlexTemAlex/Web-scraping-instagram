@@ -2,8 +2,8 @@ async () => {
   const result = {
     username: null,
     private: null,
-    followers: null,
-    following: null,
+    num_followers: null,
+    num_following: null,
     category: null,
     bio: null,
   };
@@ -63,12 +63,12 @@ async () => {
     // usamos keywords pero múltiples idiomas
     if (text.match(/followers|seguidores/)) {
       const num = text.split(" ")[0];
-      result.followers = parseNumber(num);
+      result.num_followers = parseNumber(num);
     }
 
     if (text.match(/following|seguidos/)) {
       const num = text.split(" ")[0];
-      result.following = parseNumber(num);
+      result.num_following = parseNumber(num);
     }
   });
 
