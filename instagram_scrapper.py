@@ -112,65 +112,129 @@ class InstagramScrapper:
 
                 el = post_elements.nth(i)
 
-                # 🔽 scroll
+                # scroll
                 el.scroll_into_view_if_needed()
                 page.wait_for_timeout(500)
 
-                # 🔥 click robusto (fallback incluido)
+                # click robusto (fallback incluido)
                 try:
                     el.click(timeout=3000)
                 except:
                     page.evaluate("(el) => el.click()", el)
 
-                # ⏳ esperar modal
-                page.wait_for_selector("article", timeout=10000)
-                page.wait_for_selector("time", timeout=10000)
+                page.wait_for_selector('article time[datetime]', timeout=10000)
+                page.wait_for_timeout(1000)
+                #             # images: Array.from(d?.querySelectorAll('img') || []).map(img => img.src)
 
-                # 📅 fecha
-                datetime_utc = page.evaluate("""
-                    () => document.querySelector('time')?.getAttribute('datetime')
-                """)
+                data = page.evaluate("""
+                    () => {
+                        const dialog = document.querySelector('div[role="dialog"]');
+                        if (!dialog) return null;
 
-                # ❤️ likes (más robusto)
-                likes = page.evaluate("""
-                () => {
-                    const spans = document.querySelectorAll('span');
-                    for (let s of spans) {
-                        const text = s.innerText.toLowerCase();
-                        if (text.includes('likes') || text.includes('me gusta')) {
-                            return text
-                                .replace('likes', '')
-                                .replace('me gusta', '')
-                                .trim();
+                        const article = dialog.querySelector('article[role="presentation"]');
+                        if (!article) return null;
+
+                        const imgPost = article.querySelector('div[role="button"] div > img')?.src || null;
+                            
+                        const datetime = article.querySelector('time')?.getAttribute('datetime') || null;
+
+                        let likes = null;
+                        const spans = article.querySelectorAll('span');
+                        for (let s of spans) {
+                            const text = s.innerText.toLowerCase();
+                            if (text.includes('likes') || text.includes('me gusta')) {
+                                likes = text
+                                    .replace('likes', '')
+                                    .replace('me gusta', '')
+                                    .trim();
+                                break;
+                            }
                         }
+
+                        // contenedor comentarios + descripcion
+                        const ulDescriptionAndComments = article.querySelector('div[role="presentation"] div div ul');
+                        if (!ulDescriptionAndComments) return { datetime, likes, writer: null, text: null, comments: [] };
+                        
+                        // description
+                        const lis = ulDescriptionAndComments.querySelectorAll('div[role="button"] li');
+
+                        let writer = null;
+                        let text = null;
+                        const comments = [];
+
+                        for (const d of lis) {
+                            const tmpWriter = d.querySelector('h2')?.innerText?.trim() || null;
+                            const tmpText = d.querySelector('h1')?.innerText?.trim() || null;
+
+                            if (tmpText) {
+                                writer = tmpWriter;
+                                text = tmpText;
+                                break;
+                            }
+                        }
+                        
+                        
+                        // comments (writer + text)
+                        const commentList = ulDescriptionAndComments.querySelectorAll('div div div ul > div[role="button"]');
+
+                        Array.from(commentList).forEach((el, idx) => {
+                            const user = el.querySelector('li h3')?.innerText?.trim();
+                            let content = el.querySelector('li > div > div > div > div > span')?.innerText?.trim();
+
+                            if (!content) return;
+
+                            // primer elemento = descripción del post
+                            if (idx !== 0) {
+                                comments.push({
+                                    id: comments.length + 1,
+                                    writer: user,
+                                    text: content
+                                });
+                            }
+                        });
+
+                        return { imgPost, datetime, likes, writer, text, comments };
                     }
-                    return null;
-                }
                 """)
+
+                if not data:
+                    data = {
+                        "imgPost": None,
+                        "datetime": None,
+                        "likes": None,
+                        "writer": None,
+                        "text": None,
+                        "comments": []
+                    }
 
                 posts[f"post_{i+1}"] = {
                     "url": page.url,
-                    "date_ecuador": self.to_ecuador_time(datetime_utc) if datetime_utc else None,
-                    "likes": likes
+                    "imgPost": data["imgPost"],
+                    "datetime_utc": data["datetime"],
+                    "likes": data["likes"],
+                    "writer": data["writer"],
+                    "text": data["text"],
+                    "comments": data["comments"]
                 }
-
-                # ❌ cerrar modal (PRIORIDAD: botón real)
+                
                 try:
-                    close_btn = page.locator('svg[aria-label="Cerrar"], svg[aria-label="Close"]').first
-                    close_btn.locator("..").click(timeout=3000)
+                    close_btn = page.locator('div[role="button"]:has(svg[aria-label="Cerrar"])').first
+
+                    close_btn.click(force=True, timeout=5000)
+
                 except:
-                    # fallback
-                    page.keyboard.press("Escape")
-
-                # ⏳ esperar que el modal desaparezca
-                page.wait_for_selector("article", state="hidden", timeout=10000)
-
+                    pass
+                
             except Exception as e:
                 print(f"Error en post {i}: {e}")
+                
                 posts[f"post_{i+1}"] = {
                     "url": None,
-                    "date_ecuador": None,
-                    "likes": None
+                    "datetime_utc": None,
+                    "likes": None,
+                    "writer": None,
+                    "text": None,
+                    "comments": []
                 }
 
         return posts

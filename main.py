@@ -84,8 +84,8 @@ def process_profile(ig, user, buffer):
             **(data or {})
         }
         
-        print("   Datos Extraidos:")
-        print(f"{json.dumps(result, indent=4, ensure_ascii=False)}\n")
+        print("\n   Datos Extraidos:")
+        print(f"   {json.dumps(result, indent=4, ensure_ascii=False)}\n")
         
         buffer.append(result)   # Guardar en datos en buffer
     except Exception as e:
