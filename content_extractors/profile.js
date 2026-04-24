@@ -103,41 +103,79 @@ async () => {
     await sleep(800);
   }
 
-  const bioContainer = header.querySelector("section:last-of-type");
+  const bioContainer = document.querySelectorAll(
+    "main header section > div > div",
+  );
 
-  if (bioContainer) {
-    const seen = new Set();
+  let bios = [];
 
-    let lines = Array.from(
-      bioContainer.querySelectorAll("div[dir='auto'], span"),
-    )
-      .map((el) => el.innerText.trim())
-      .filter((text) => {
-        if (!text) return false;
+  if (bioContainer && bioContainer.length > 0) {
+    bioContainer.forEach((container) => {
+      const elements = Array.from(container.querySelectorAll("span")).filter(
+        (el) => !el.closest('div[role="menu"]'),
+      );
+      // 🔥 FILTRO: descarta contenedores pobres (ruido)
+      if (elements.length < 2) return;
 
-        const lower = text.toLowerCase();
+      const seen = new Set();
+      let lines = [];
+      let links = [];
 
-        if (lower === "más") return false;
-        if (seen.has(text)) return false;
-        if (/^\d+$/.test(text)) return false;
-        if (lower.match(/publicaciones|seguidores|seguidos/)) return false;
+      // 🔗 EXTRAER HREF (filtrados)
+      const anchors = container.querySelectorAll("a");
+      anchors.forEach((a) => {
+        const href = a.getAttribute("href");
+        if (!href) return;
 
-        seen.add(text);
+        const clean = href.trim().toLowerCase();
 
-        return true;
+        // 🔥 FILTROS CLAVE
+        if (clean.includes("/followers")) return;
+        if (clean.includes("/following")) return;
+        if (clean.startsWith("/") && !clean.includes("http")) return; // evita internos tipo /user/
+
+        if (!links.includes(href)) {
+          links.push(href);
+        }
       });
 
-    let bio = lines.join(". ");
+      Array.from(elements)
+        .map((el) => el.innerText.trim())
+        .forEach((text) => {
+          if (!text) return;
 
-    bio = bio.replace(
-      /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu,
-      "",
-    );
+          // 🔥 separar textos pegados
+          const parts = text.split(".").map((t) => t.trim());
 
-    bio = bio.replace(/\.+/g, ".");
-    bio = bio.replace(/\s+/g, " ").trim();
-    result.bio = bio || null;
+          parts.forEach((part) => {
+            if (!part) return;
+
+            const lower = part.toLowerCase();
+
+            if (lower === "más") return;
+            if (seen.has(part)) return;
+            if (/^\d+$/.test(part)) return;
+            if (lower.match(/publicaciones|seguidores|seguidos/)) return;
+
+            // 🔥 evitar cosas tipo "497 mil"
+            if (part.match(/^\d+\s*(mil|k|m)?$/i)) return;
+
+            seen.add(part);
+            lines.push(part);
+          });
+        });
+
+      // 🔥 FILTRO FINAL
+      if (lines.length >= 2 || links.length > 0) {
+        bios.push({
+          text: lines,
+          links: links,
+        });
+      }
+    });
   }
 
+  // resultado por secciones
+  result.bio = bios.length > 0 ? bios : null;
   return result;
 };

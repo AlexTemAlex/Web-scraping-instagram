@@ -7,8 +7,9 @@ __pycache__/
 # cookies
 *_instagram.json
 
-#archivos xlsx
+# archivos xlsx
 *.xlsx
 
 # JSON
-persistencia.json
+*user_list_persistence.json
+*user_persistence.json

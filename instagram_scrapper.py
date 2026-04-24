@@ -6,7 +6,7 @@ BASE_PATH = Path(__file__).parent
 
 class InstagramScrapper:
 
-    def __init__(self, page):
+    def __init__(self, page=None):
         self.page = page
         self.dict_functions = [     # Se recomienda mantener la funcion profile primera
             {
@@ -24,14 +24,14 @@ class InstagramScrapper:
             {
                 "name": "posts",
                 "func": self.extract_posts,
-                "args": {"num_post": 5},
+                "args": {"num_post": 10},
                 "enabled": True
             },
             {
                 "name": "list_following",
                 "func": self.extract_list_following,
                 "args": {"max_following": 50},
-                "enabled": True
+                "enabled": False
             }
         ]
 
@@ -124,7 +124,7 @@ class InstagramScrapper:
 
                 page.wait_for_selector('article time[datetime]', timeout=10000)
                 page.wait_for_timeout(1000)
-                #             # images: Array.from(d?.querySelectorAll('img') || []).map(img => img.src)
+                # images: Array.from(d?.querySelectorAll('img') || []).map(img => img.src)
 
                 data = page.evaluate("""
                     () => {
@@ -150,48 +150,51 @@ class InstagramScrapper:
                                 break;
                             }
                         }
-
+                        
                         // contenedor comentarios + descripcion
                         const ulDescriptionAndComments = article.querySelector('div[role="presentation"] div div ul');
-                        if (!ulDescriptionAndComments) return { datetime, likes, writer: null, text: null, comments: [] };
-                        
-                        // description
-                        const lis = ulDescriptionAndComments.querySelectorAll('div[role="button"] li');
 
+                        // valores por defecto
                         let writer = null;
                         let text = null;
                         const comments = [];
 
-                        for (const d of lis) {
-                            const tmpWriter = d.querySelector('h2')?.innerText?.trim() || null;
-                            const tmpText = d.querySelector('h1')?.innerText?.trim() || null;
+                        if (ulDescriptionAndComments) {
 
-                            if (tmpText) {
-                                writer = tmpWriter;
-                                text = tmpText;
-                                break;
+                            // description
+                            const lis = ulDescriptionAndComments.querySelectorAll('div[role="button"] li');
+
+                            for (const d of lis) {
+                                const tmpWriter = d.querySelector('h2')?.innerText?.trim() || null;
+                                const tmpText = d.querySelector('h1')?.innerText?.trim() || null;
+
+                                if (tmpText) {
+                                    writer = tmpWriter;
+                                    text = tmpText;
+                                    break;
+                                }
                             }
+                            
+                            
+                            // comments (writer + text)
+                            const commentList = ulDescriptionAndComments.querySelectorAll('div div div ul > div[role="button"]');
+
+                            Array.from(commentList).forEach((el, idx) => {
+                                const user = el.querySelector('li h3')?.innerText?.trim();
+                                let content = el.querySelector('li > div > div > div > div > span')?.innerText?.trim();
+
+                                if (!content) return;
+
+                                // primer elemento = descripción del post
+                                if (idx !== 0) {
+                                    comments.push({
+                                        id: comments.length + 1,
+                                        writer: user,
+                                        text: content
+                                    });
+                                }
+                            });
                         }
-                        
-                        
-                        // comments (writer + text)
-                        const commentList = ulDescriptionAndComments.querySelectorAll('div div div ul > div[role="button"]');
-
-                        Array.from(commentList).forEach((el, idx) => {
-                            const user = el.querySelector('li h3')?.innerText?.trim();
-                            let content = el.querySelector('li > div > div > div > div > span')?.innerText?.trim();
-
-                            if (!content) return;
-
-                            // primer elemento = descripción del post
-                            if (idx !== 0) {
-                                comments.push({
-                                    id: comments.length + 1,
-                                    writer: user,
-                                    text: content
-                                });
-                            }
-                        });
 
                         return { imgPost, datetime, likes, writer, text, comments };
                     }
@@ -218,9 +221,9 @@ class InstagramScrapper:
                 }
                 
                 try:
-                    close_btn = page.locator('div[role="button"]:has(svg[aria-label="Cerrar"])').first
-
-                    close_btn.click(force=True, timeout=5000)
+                    close_btn = page.locator('div[role="button"]:has(svg[aria-label*="Cerrar"])').first
+                    close_btn.wait_for(state="visible", timeout=5000)
+                    close_btn.click(force=True)
 
                 except:
                     pass
