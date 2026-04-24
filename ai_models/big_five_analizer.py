@@ -113,7 +113,6 @@ class BigFiveAnalizer:
         - category
 
         IMPORTANTE:
-        Ignora contenido de comentarios.
         Bio puede represnetar personalidad directa tambien
         Los demas campos ayudan a inferir contexto social.
 
@@ -143,7 +142,7 @@ class BigFiveAnalizer:
         - posibles picos emocionales o sociales
         - evolución del comportamiento en el tiempo
 
-        Devuelve un resumen claro de patrones temporales.
+        Devuelve un resumen claro.
 
         -----------------------------------------
         TAREA 3: PERCEPCIÓN SOCIAL
@@ -163,16 +162,40 @@ class BigFiveAnalizer:
         - social_perception_analysis (comentarios + percepción externa)
 
         -----------------------------------------
-        TAREA 5: NIVEL DE CONFIANZA
+        TAREA 5: CARACTERÍSTICAS DEL PERFIL
+        -----------------------------------------
+        Genera un array con las principales características del usuario:
+
+        - rasgos dominantes
+        - estilo social
+        - comportamiento digital
+        - tipo de interacción
+        - nivel de actividad
+        - tipo de personalidad percibida
+
+        Ejemplo:
+        "profile_characteristics": [
+        "activo en redes",
+        "alto nivel social",
+        "comunicación abierta"
+        ]
+
+        -----------------------------------------
+        TAREA 6: CONCLUSIÓN GENERAL
+        -----------------------------------------
+        Genera una conclusión global del perfil:
+
+        - resumen integral del usuario
+        - coherencia entre personalidad y percepción social
+        - interpretación final psicológica
+
+        -----------------------------------------
+        TAREA 7: NIVEL DE CONFIANZA
         -----------------------------------------
         confidence (0-100):
-
-        Evalúa:
         - cantidad de datos
-        - calidad del bio
-        - cantidad de posts
-        - cantidad de comentarios
-        - coherencia temporal (IMPORTANTE)
+        - calidad del contenido
+        - coherencia temporal
         - consistencia general
 
         -----------------------------------------
@@ -207,9 +230,10 @@ class BigFiveAnalizer:
                     "image_type": ""
                 }}
             }},
+            "profile_characteristics": [],
+            "global_conclusion": "",
             "confidence": 0-100
         }}
-
         -----------------------------------------
         DATOS:
         {json.dumps(batch_filtrado, ensure_ascii=False)}

@@ -21,7 +21,7 @@ class InstagramScrapper:
             {
                 "name": "posts",
                 "func": self.extract_posts,
-                "args": {"num_post": 10},
+                "args": {"num_post": 10, "maxComments": None},
                 "enabled": True
             },
             {
@@ -94,9 +94,9 @@ class InstagramScrapper:
     def extract_location_creation_date(self, page):
         return self.run_extractor(page, "location_creation_date.js")
 
-    def extract_posts(self, page, num_post):
+    def extract_posts(self, page, num_post, maxComments):
         posts = {}
-
+        
         page.wait_for_selector('a[href*="/p/"], a[href*="/reel/"]', timeout=10000)
 
         for i in range(num_post):
@@ -122,9 +122,9 @@ class InstagramScrapper:
                 page.wait_for_selector('article time[datetime]', timeout=10000)
                 page.wait_for_timeout(1000)
                 # images: Array.from(d?.querySelectorAll('img') || []).map(img => img.src)
-
+                
                 data = page.evaluate("""
-                    () => {
+                    (maxComments) => {
                         const dialog = document.querySelector('div[role="dialog"]');
                         if (!dialog) return null;
 
@@ -176,7 +176,13 @@ class InstagramScrapper:
                             // comments (writer + text)
                             const commentList = ulDescriptionAndComments.querySelectorAll('div div div ul > div[role="button"]');
 
-                            Array.from(commentList).forEach((el, idx) => {
+                            let elements = Array.from(commentList).slice(1); // saltar descripción
+
+                            if (maxComments !== null) {
+                                elements = elements.slice(0, maxComments);
+                            }
+
+                            elements.forEach((el, idx) => {
                                 const user = el.querySelector('li h3')?.innerText?.trim();
                                 let content = el.querySelector('li > div > div > div > div > span')?.innerText?.trim();
 
@@ -185,7 +191,7 @@ class InstagramScrapper:
                                 // primer elemento = descripción del post
                                 if (idx !== 0) {
                                     comments.push({
-                                        id: comments.length + 1,
+                                        id: idx + 1,
                                         writer: user,
                                         text: content
                                     });
@@ -195,7 +201,7 @@ class InstagramScrapper:
 
                         return { imgPost, datetime, likes, writer, text, comments };
                     }
-                """)
+                """, maxComments + 1)
 
                 if not data:
                     data = {
