@@ -1,4 +1,6 @@
 from playwright.sync_api import sync_playwright
+from dotenv import load_dotenv
+
 import os
 
 from scrappers.instagram_scrapper import InstagramScrapper
@@ -9,6 +11,8 @@ from services.browser_service import iniciar_browser
 from services.file_service import load_excel
 from services.scraping_service import ejecutar_scraping
 from config import *
+
+load_dotenv()
 
 def main():
     with sync_playwright() as p:
@@ -34,7 +38,7 @@ def main():
 
                 users = df[["id", "url"]].to_dict(orient="records")
 
-                browser, page = iniciar_browser(p, browserHeadless)
+                browser, page = iniciar_browser(p, STORAGE_PATH, browserHeadless)
                 ig.page = page
 
                 ejecutar_scraping(ig, users, JSON_FILE_USERS_LIST)
@@ -42,7 +46,7 @@ def main():
                 browser.close()
                 
             elif opcion == "3":
-                username = input("Ingresa el usuario de Instagram: ").strip().replace("@", "")
+                username = input("Ingresa el usuario: ").strip().replace("@", "")
 
                 if not username:
                     print("❌ Usuario inválido")
@@ -56,7 +60,7 @@ def main():
                 users = [user]
                 JSON_FILE = f"{username}_{JSON_FILE_USER}"
 
-                browser, page = iniciar_browser(p, browserHeadless)
+                browser, page = iniciar_browser(p, STORAGE_PATH, browserHeadless)
                 ig.page = page
 
                 ejecutar_scraping(ig, users, JSON_FILE)
@@ -75,7 +79,7 @@ def main():
                 print(f"Archivo seleccionado: {archivo_seleccionado}")
 
                 analizer = BigFiveAnalizer(
-                    api_key="TU_API_KEY",
+                    api_key=OPENAI_API_KEY ,
                     input_json=archivo_seleccionado,
                     output_json="resultado_bigfive.json",
                     batch_size=10,

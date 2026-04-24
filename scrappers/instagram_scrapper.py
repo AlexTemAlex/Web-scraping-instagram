@@ -1,9 +1,6 @@
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
-import random
-
-BASE_PATH = Path(__file__).parent
-
+from config import CONTENT_EXTRACTORS_PATH
 class InstagramScrapper:
 
     def __init__(self, page=None):
@@ -332,7 +329,7 @@ class InstagramScrapper:
         }
 
     def run_extractor(self, page, js_filename):
-        js_path = BASE_PATH / f"content_extractors/{js_filename}"
+        js_path = CONTENT_EXTRACTORS_PATH / js_filename
 
         try:
             with open(js_path, "r", encoding="utf-8") as f:

@@ -1,6 +1,6 @@
 import os
 import time
-from browser import Browser
+from model.browser import Browser
 
 def ensure_session_instagram(p, storage_path):
     """

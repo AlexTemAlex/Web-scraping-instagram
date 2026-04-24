@@ -13,3 +13,6 @@ __pycache__/
 # JSON
 *user_list_persistence.json
 *user_persistence.json
+resultado_bigfive.json
+# .env
+.env
