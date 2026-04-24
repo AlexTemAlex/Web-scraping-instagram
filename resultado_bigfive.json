@@ -1,0 +1,60 @@
+[
+    {
+        "username": "elibarahonap",
+        "big_five": {
+            "openness": 60,
+            "conscientiousness": 40,
+            "extraversion": 40,
+            "agreeableness": 75,
+            "neuroticism": 55
+        },
+        "temporal_analysis": {
+            "posting_frequency": "Baja: 5 publicaciones en ~24 meses (promedio ~0.2 posts/mes)",
+            "activity_pattern": "Irregular con periodos inactivos largos (ago/2023 → jul/2024) y un ligero aumento de actividad en 2025 (ene–mar–ago/2025).",
+            "consistency": "Baja a moderada: no hay consistencia regular; hay agrupamientos de publicaciones en 2025.",
+            "summary": "Perfil de publicación es esporádico. Grandes lapsos de inactividad seguidos por un pequeño pico de actividad en 2025. Contenido repetitivo y breve (emoji/afirmaciones emocionales), lo que sugiere episodios puntuales de expresión emocional o autoafirmación en lugar de una rutina constante."
+        },
+        "analysis": {
+            "personality_analysis": {
+                "summary": "Basado en la bio (mensaje de autoaceptación) y publicaciones cortas y afectuosas, la persona muestra alta amabilidad y tendencia a la expresión emocional positiva. Apertura moderada por comentarios sobre lugares y uso de emojis; extraversión moderada-baja por actividad pública reducida; consciencia relativamente baja por baja frecuencia y falta de estructuración en las publicaciones; neuroticismo moderado por referencias simbólicas a curación/afecto (emoji de corazón vendado).",
+                "strengths": "Alta empatía y tono positivo/afirmador; apariencia cercana y cálida para su red; capacidad para expresar vulnerabilidad de forma sencilla y atractiva.",
+                "risks": "Baja visibilidad y actividad irregular, lo que puede limitar redes sociales y oportunidades; la expresión de vulnerabilidad recurrente podría indicar momentos emocionales que requieren apoyo fuera de la red."
+            },
+            "social_perception_analysis": {
+                "summary": "Los comentarios son escasos. Uno es una nota juguetona y afectuosa que sugiere familiaridad o cariño ('La más aferrada si fui jajajaja'); el otro es un mensaje de tipo spam/religioso sin relación directa. En conjunto, la audiencia cercana percibe a la persona como afectuosa y con un tono jocoso/cercano.",
+                "sentiment": "neutro",
+                "image_type": "graciosa"
+            }
+        },
+        "confidence": 60
+    },
+    {
+        "username": "danielnoboaok",
+        "big_five": {
+            "openness": 55,
+            "conscientiousness": 80,
+            "extraversion": 85,
+            "agreeableness": 60,
+            "neuroticism": 30
+        },
+        "temporal_analysis": {
+            "posting_frequency": "Moderada-alta en el período reciente (10 posts entre 2026-03-05 y 2026-04-22; concentrados en abril).",
+            "activity_pattern": "Ambiente en ráfagas: actividad baja en marzo (1 post) seguida por un pico sostenido en abril (múltiples publicaciones en corta ventana), con foco en resultados y anuncios gubernamentales. Hay un pico notable alrededor del 15 de abril con posts sobre certificaciones y logros.",
+            "consistency": "Inconsistente a largo plazo (periodos inactivos seguidos de ráfagas intensas). En el periodo analizado muestra consistencia temática (mensajes sobre obras, empleo, seguridad y logros) y ritmo intensificado en abril.",
+            "summary": "Perfil comunicacional orientado a agenda gubernamental y gestión: publica en ráfagas cuando hay anuncios o evidencia de logros (obras, acuerdos, programas). Mantiene un patrón de alta visibilidad en ventanas concretas —probable coordinación de comunicaciones o respuesta a eventos políticos— y menor actividad en periodos sin hitos."
+        },
+        "analysis": {
+            "personality_analysis": {
+                "summary": "A partir de la bio (presidente, fundador de partido) y los posts se desprende una personalidad pública pragmática, orientada a la acción y al liderazgo. Alto grado de extraversión y planificación (mensajes públicos constantes sobre obras, contratos y cifras); moderada apertura práctica (enfoque en resultados económicos/infraestructura más que en experimentación cultural).",
+                "strengths": "Fuerte proyección pública y carisma comunicacional; clara orientación a objetivos y logro; discurso cohesionado que refuerza autoridad y capacidad de gestión; buena capacidad para movilizar apoyo y visibilidad (1.4M seguidores).",
+                "risks": "Tendencia a posicionamientos polarizantes (retórica combativa en ocasiones), posible desconexión con problemáticas de servicios públicos percibidas por la población (salud, seguridad), y exposición a críticas públicas que pueden erosionar confianza si los resultados no se perciben a nivel local."
+            },
+            "social_perception_analysis": {
+                "summary": "La comunidad muestra polarización: un sector abundante manifiesta admiración, apoyo y agradecimiento (emojis, felicitaciones, refrendo de liderazgo); otro segmento es crítico y reclama incumplimientos en salud, seguridad y servicios básicos, acusa desconexión/burbuja y cuestiona transparencia. Hay tanto halagos afectivos como críticas contundentes y preguntas concretas sobre resultados en sectores clave.",
+                "sentiment": "neutro",
+                "image_type": "líder polarizador (admirado por seguidores y criticado por opositores/afectados)"
+            }
+        },
+        "confidence": 80
+    }
+]
