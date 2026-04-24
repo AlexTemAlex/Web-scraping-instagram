@@ -6,3 +6,13 @@ __pycache__/
 
 # cookies
 *_instagram.json
+
+# archivos xlsx
+*.xlsx
+
+# JSON
+*user_list_persistence.json
+*user_persistence.json
+resultado_bigfive.json
+# .env
+.env

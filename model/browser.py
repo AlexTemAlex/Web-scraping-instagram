@@ -10,7 +10,7 @@ class Browser:
         self.context = None
 
     # Inicia Playwright y abre el navegador
-    def start(self):
+    def start_browser(self):
         self.browser = self.playwright.chromium.launch(     # Lanza el navegador Chromium embebido, si se quiere el instalado en host usar channel="chrome",
             headless=self.headless
         )
@@ -23,12 +23,10 @@ class Browser:
         else:   # Si no hay cookies, crea un contexto limpio
             self.context = self.browser.new_context()
 
-        return self.context.new_page()                 # Crea la primera pagina (page)
-
     # Abre una nueva pestaña dentro del mismo contexto, sino crea y devuelve una nueva página
     def new_page(self):
         if self.context is None:
-            raise Exception("El navegador no ha sido iniciado. Llama a start() primero.")
+            raise Exception("El navegador no ha sido iniciado. Llama a start_browser() primero.")
         return self.context.new_page()
 
     # Cierra todo correctamente (browser + playwright)
